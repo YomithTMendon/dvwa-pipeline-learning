@@ -6,27 +6,29 @@ on:
   pull_request:
 
 jobs:
-  security:
+  devsecops:
     runs-on: ubuntu-latest
 
     steps:
-    # ---------------------------
-    # 1️⃣ Checkout Code
-    # ---------------------------
+    # -------------------------------------------------
+    # 1️⃣ Checkout Source Code
+    # -------------------------------------------------
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # ---------------------------
-    # 2️⃣ Gitleaks – Secret Scanning
-    # ---------------------------
+    # -------------------------------------------------
+    # 2️⃣ Gitleaks – Secret Scanning (Corrected)
+    # -------------------------------------------------
     - name: Gitleaks Scan
       uses: gitleaks/gitleaks-action@v2
       with:
-        fail: false
+        config-path: .gitleaks.toml
+      env:
+        GITLEAKS_EXIT_CODE: 0
 
-    # ---------------------------
-    # 3️⃣ Semgrep – SAST
-    # ---------------------------
+    # -------------------------------------------------
+    # 3️⃣ Semgrep – Static Application Security Testing
+    # -------------------------------------------------
     - name: Semgrep Scan
       uses: semgrep/semgrep-action@v1
       with:
@@ -34,20 +36,20 @@ jobs:
       env:
         SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
-    # ---------------------------
-    # 4️⃣ Trivy – Filesystem Scan
-    # ---------------------------
-    - name: Trivy FS Scan
+    # -------------------------------------------------
+    # 4️⃣ Trivy – Filesystem (SCA) Scan
+    # -------------------------------------------------
+    - name: Trivy Filesystem Scan
       uses: aquasecurity/trivy-action@0.24.0
       with:
         scan-type: fs
         severity: HIGH,CRITICAL
         exit-code: 0
 
-    # ---------------------------
-    # 5️⃣ Start DVWA Container
-    # ---------------------------
-    - name: Start DVWA
+    # -------------------------------------------------
+    # 5️⃣ Start DVWA Application
+    # -------------------------------------------------
+    - name: Start DVWA Container
       run: |
         docker run -d \
           -p 8080:80 \
@@ -55,9 +57,9 @@ jobs:
           vulnerables/web-dvwa
         sleep 30
 
-    # ---------------------------
+    # -------------------------------------------------
     # 6️⃣ Trivy – Docker Image Scan
-    # ---------------------------
+    # -------------------------------------------------
     - name: Trivy Image Scan
       uses: aquasecurity/trivy-action@0.24.0
       with:
@@ -65,9 +67,9 @@ jobs:
         severity: HIGH,CRITICAL
         exit-code: 0
 
-    # ---------------------------
-    # 7️⃣ OWASP ZAP – DAST
-    # ---------------------------
+    # -------------------------------------------------
+    # 7️⃣ OWASP ZAP – Dynamic Application Security Test
+    # -------------------------------------------------
     - name: OWASP ZAP Baseline Scan
       uses: zaproxy/action-baseline@v0.12.0
       with:
