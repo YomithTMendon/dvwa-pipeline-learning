@@ -25,10 +25,6 @@ jobs:
       continue-on-error: true
       with:
         config: p/default
-        error_on_findings: false
-      env:
-        SEMGREP_APP_TOKEN: ""
-
     # ----------------------------
     # Trivy Filesystem Scan
     # ----------------------------
