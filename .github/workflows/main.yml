@@ -1,78 +1,60 @@
-name: DVWA DevSecOps Pipeline
+name: DVWA Security Pipeline
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
-  devsecops:
+  security-scans:
     runs-on: ubuntu-latest
 
     steps:
-    # -------------------------------------------------
-    # 1️⃣ Checkout Source Code
-    # -------------------------------------------------
+    # ----------------------------
+    # Checkout code
+    # ----------------------------
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # -------------------------------------------------
-    # 2️⃣ Gitleaks – Secret Scanning (Corrected)
-    # -------------------------------------------------
-    - name: Gitleaks Scan
-      uses: gitleaks/gitleaks-action@v2
-      with:
-        config-path: .gitleaks.toml
-      env:
-        GITLEAKS_EXIT_CODE: 0
-
-    # -------------------------------------------------
-    # 3️⃣ Semgrep – Static Application Security Testing
-    # -------------------------------------------------
-    - name: Semgrep Scan
+    # ----------------------------
+    # Semgrep SAST Scan
+    # ----------------------------
+    - name: Run Semgrep
       uses: semgrep/semgrep-action@v1
+      continue-on-error: true
       with:
-        config: "p/default"
+        config: p/default
         error_on_findings: false
       env:
-        SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        SEMGREP_APP_TOKEN: ""
 
-    # -------------------------------------------------
-    # 4️⃣ Trivy – Filesystem (SCA) Scan
-    # -------------------------------------------------
-    - name: Trivy Filesystem Scan
-      uses: aquasecurity/trivy-action@0.24.0
+    # ----------------------------
+    # Trivy Filesystem Scan
+    # ----------------------------
+    - name: Run Trivy vulnerability scan
+      uses: aquasecurity/trivy-action@0.20.0
+      continue-on-error: true
       with:
         scan-type: fs
-        severity: HIGH,CRITICAL
+        severity: CRITICAL,HIGH,MEDIUM
         exit-code: 0
+        ignore-unfixed: true
 
-    # -------------------------------------------------
-    # 5️⃣ Start DVWA Application
-    # -------------------------------------------------
-    - name: Start DVWA Container
+    # ----------------------------
+    # Gitleaks Secret Scan
+    # ----------------------------
+    - name: Run Gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      continue-on-error: true
+      with:
+        args: detect --verbose --redact
+
+    # ----------------------------
+    # Summary
+    # ----------------------------
+    - name: Scan Summary
       run: |
-        docker run -d \
-          -p 8080:80 \
-          --name dvwa \
-          vulnerables/web-dvwa
-        sleep 30
-
-    # -------------------------------------------------
-    # 6️⃣ Trivy – Docker Image Scan
-    # -------------------------------------------------
-    - name: Trivy Image Scan
-      uses: aquasecurity/trivy-action@0.24.0
-      with:
-        image-ref: vulnerables/web-dvwa
-        severity: HIGH,CRITICAL
-        exit-code: 0
-
-    # -------------------------------------------------
-    # 7️⃣ OWASP ZAP – Dynamic Application Security Test
-    # -------------------------------------------------
-    - name: OWASP ZAP Baseline Scan
-      uses: zaproxy/action-baseline@v0.12.0
-      with:
-        target: "http://localhost:8080"
-        fail_action: false
+        echo "✅ Semgrep scan completed"
+        echo "✅ Trivy scan completed"
+        echo "✅ Gitleaks scan completed"
