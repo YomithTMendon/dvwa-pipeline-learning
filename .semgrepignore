@@ -1,0 +1,4 @@
+# Ignore intentionally vulnerable DVWA code
+vulnerabilities/
+docs/
+tests/
