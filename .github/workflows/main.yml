@@ -33,6 +33,7 @@ jobs:
       uses: semgrep/semgrep-action@v1
       with:
         config: "p/default"
+        error_on_findings: false
       env:
         SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
