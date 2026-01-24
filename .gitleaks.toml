@@ -1,0 +1,8 @@
+title = "DVWA Gitleaks Configuration"
+
+[allowlist]
+paths = [
+  "vulnerabilities/",
+  "docs/",
+  "tests/"
+]
